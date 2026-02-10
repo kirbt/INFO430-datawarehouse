@@ -39,8 +39,8 @@ combined_data <- csv_files |>
 
 # save combined csv
 ```{r}
-output_path <- file.path(output_folder, csv_name)
-write_csv(file, folder)
+output_path <- file.path(folder, "iata_data.csv")
+write_csv(combined_data, output_path)
 ```
 
 
