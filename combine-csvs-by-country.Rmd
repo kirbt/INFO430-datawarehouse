@@ -1,0 +1,49 @@
+---
+title: "combine csvs by country"
+author: "Kirby Vo"
+date: "2026-02-10"
+output: pdf_document
+---
+
+
+```{r}
+library(readr)
+library(dplyr)
+```
+
+# folder
+```{r}
+folder <- "data/country-development-finance/csv/"
+```
+
+```{r}
+csv_files <- list.files(path = folder,
+                        pattern = "\\.csv$",
+                        full.names = TRUE,
+                        recursive = TRUE)
+
+csv_files |>
+  head(5)
+```
+
+# combine all the csvs
+```{r}
+combined_data <- csv_files |>
+  lapply(function(file) {
+    message("reading ", basename(file))
+    read_csv(file, show_col_types = FALSE)
+  }) |>
+  bind_rows()
+```
+
+
+# save combined csv
+```{r}
+output_path <- file.path(output_folder, csv_name)
+write_csv(file, folder)
+```
+
+
+
+
+
