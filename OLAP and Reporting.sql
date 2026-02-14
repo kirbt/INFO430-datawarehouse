@@ -294,29 +294,77 @@ year to year differences in funding and allow policy makers to
 identify long-term funding trends rather than short-term.
 */
 
-WITH sector_year_totals AS (
+/* 
+QUERY 7 (Time Series Analytics)
+
+The purpose of this query is to combine IATI data and demographic indicators
+to calculate a 3-year moving average of aid per capita for each country.
+Previously in other queries we've only looked at one table at a time so
+just to show how it would look like if we did both here you go. 
+
+In this instance, aid amounts alone wouldnt reveal how much funding each
+person might effective receive, and population data alone wouldn't show
+the scale of financial support for the country. By joining the two tables
+we could calculate aid per capita.
+*/
+
+-- agg. total aid per country per year
+
+WITH aid_by_year AS (
     SELECT 
-        s.sector_name,
+        c.country_id,
+        c.country_name,
         t.year,
         SUM(f.value_usd) AS total_aid
     FROM fact_aid_transaction f
-    JOIN dim_sector s ON f.sector_id = s.sector_id
+    JOIN dim_country c ON f.country_id = c.country_id
     JOIN dim_time t ON f.time_id = t.time_id
-    GROUP BY s.sector_name, t.year
+    GROUP BY c.country_id, c.country_name, t.year
+),
+
+-- get population from country context
+population_by_year AS (
+    SELECT 
+        c.country_id,
+        c.country_name,
+        t.year,
+        f.population
+    FROM fact_country_context f
+    JOIN dim_country c ON f.country_id = c.country_id
+    JOIN dim_time t ON f.time_id = t.time_id
+),
+
+-- combine the two tables
+aid_per_capita AS (
+    SELECT 
+        a.country_name,
+        a.year,
+        a.total_aid,
+        p.population,
+        CASE 
+            WHEN p.population > 0 THEN a.total_aid * 1.0 / p.population
+            ELSE NULL
+        END AS aid_per_capita
+    FROM aid_by_year a
+    JOIN population_by_year p 
+        ON a.country_id = p.country_id
+       AND a.year = p.year
 )
+
+-- compute a 3 year moving avg
 SELECT 
-    sector_name AS "Sector",
+    country_name AS "Country",
     year AS "Year",
-    FORMAT(total_aid, 'C0') AS "Aid",
+    FORMAT(aid_per_capita, 'C4') AS "Aid per Capita",
     FORMAT(
-        AVG(total_aid) OVER (
-            PARTITION BY sector_name
+        AVG(aid_per_capita) OVER (
+            PARTITION BY country_name
             ORDER BY year
             ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-        ), 'C0'
-    ) AS "3-Year Moving Average"
-FROM sector_year_totals
-ORDER BY sector_name, year;
+        ), 'C4'
+    ) AS "3 Year Moving Average"
+FROM aid_per_capita
+ORDER BY country_name, year;
 
 /* 
 QUERY 8 (Time Series Analytics)
