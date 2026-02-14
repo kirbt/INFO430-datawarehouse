@@ -10,7 +10,7 @@ Transforms IATI Country Development Finance Data + World Bank WDI into a star sc
 | World Bank WDI    | databank.worldbank.org       | Country-year indicators (1970-2024)                |
 
 # Schema Output
-
+```
 data/etl_output/
 ├── dim_time.csv              # time_id, year, quarter
 ├── dim_country.csv           # country_id, iso_code, country_name
@@ -20,6 +20,7 @@ data/etl_output/
 ├── dim_transaction_type.csv  # transaction_type_id, code, name
 ├── fact_aid_transaction.csv  # iati_id, value_usd, humanitarian + FKs
 └── fact_country_context.csv  # country_id, time_id, population, gdp_per_capita...
+```
 
 # Sample Query
 
