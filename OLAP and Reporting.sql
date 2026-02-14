@@ -294,20 +294,6 @@ year to year differences in funding and allow policy makers to
 identify long-term funding trends rather than short-term.
 */
 
-/* 
-QUERY 7 (Time Series Analytics)
-
-The purpose of this query is to combine IATI data and demographic indicators
-to calculate a 3-year moving average of aid per capita for each country.
-Previously in other queries we've only looked at one table at a time so
-just to show how it would look like if we did both here you go. 
-
-In this instance, aid amounts alone wouldnt reveal how much funding each
-person might effective receive, and population data alone wouldn't show
-the scale of financial support for the country. By joining the two tables
-we could calculate aid per capita.
-*/
-
 -- agg. total aid per country per year
 
 WITH aid_by_year AS (
