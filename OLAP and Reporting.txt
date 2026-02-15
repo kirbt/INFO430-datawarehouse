@@ -123,6 +123,49 @@ FROM ranked
 WHERE org_type_rank <= 3
 ORDER BY sector_name, org_type_rank;
 
+
+/* 
+QUERY 4 (Ranking Window Function)
+
+The purpose of this query is to rank countries in each organization type
+by the total amount of aid they receive. This highlights which countries
+might be the primary receivers of funding from different types of donors.
+
+This query would be useful for understanding relationships between donors
+and countries.
+*/
+
+WITH orgtype_country_totals AS (
+    SELECT 
+        o.organization_type_name AS org_type,
+        c.country_name,
+        SUM(f.value_usd) AS total_aid
+    FROM fact_aid_transaction f
+    JOIN dim_organization o ON f.reporting_org_id = o.organization_id
+    JOIN dim_country c ON f.country_id = c.country_id
+    GROUP BY o.organization_type_name, c.country_name
+),
+ranked AS (
+    SELECT 
+        org_type,
+        country_name,
+        total_aid,
+        RANK() OVER (
+            PARTITION BY org_type
+            ORDER BY total_aid DESC
+        ) AS country_rank
+    FROM orgtype_country_totals
+)
+SELECT 
+    org_type,
+    country_name,
+    FORMAT(total_aid, 'C0') AS total_aid_usd,
+    country_rank
+FROM ranked
+WHERE country_rank <= 5
+ORDER BY org_type, country_rank;
+
+
 /* 
 QUERY 4 (Ranking Window Function)
 
@@ -170,7 +213,8 @@ ORDER BY org_type, country_rank;
 QUERY 5 (Value Window Function)
 
 The purpose of this query is to calculate year over year changes in
-total aid received by each country, using the LAG() window function.
+total aid received by each country, using the LAG() window function,
+specifically in this case for Afghanistan.
 
 This would allow policy makers to identify whether a country is
 experiencing increases or descreases in support overtime.
@@ -184,6 +228,7 @@ WITH country_year_totals AS (
     FROM fact_aid_transaction f
     JOIN dim_country c ON f.country_id = c.country_id
     JOIN dim_time t ON f.time_id = t.time_id
+    WHERE c.country_name = 'Afghanistan'
     GROUP BY c.country_name, t.year
 ),
 with_lag AS (
